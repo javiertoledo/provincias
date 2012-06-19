@@ -1,6 +1,6 @@
 # Provincias
 
-Stop storing spanish provinces in a static table in your database. Use this gem with its class Provincia and reclaim a few bytes of your storage quota.
+Stop storing spanish provinces in a static table in your database. Use this gem and reclaim a few bytes of your storage quota.
 
 ## Thanks
 
@@ -22,17 +22,13 @@ Or install it yourself as:
 
 ## Usage
 
-Install the gem as described before and use Province class to find and show province names.
-
-You may want to include the Provincias module in your classes to access the Provicia class directly. In other case it will be namespaced under Provincias::Provincia.
-
 The interface is simmilar to ActiveRecord's and provides provinces numeric codes you can use to search or easily link provinces to your classes.
 
-    Provincia.find(id) => "Some Province Name"
-    Provincia.find_by_name('Madrid') => Provincia(:id => 35, :name => 'Palmas, Las')
-    Provincia.find_by_name('wombat') => nil
-    Provincia.all => [...] # An array of Provincia instances
-    Provincia.all_for_select => [...] # An array in form [name, id] to use in select helpers in Rails
+    Provincias.find(28) => #<Provincia: @id=28, @name="Madrid">
+    Provincias.find_by_name('Palmas, Las') => #<Provincia: @id=35, @name="Palmas, Las">
+    Provincias.find_by_name('wombat') => nil
+    Provincias.all => [...] # An array of Provincia instances
+    Provincias.all_for_select => [...] # An array in form [name, id] to use in your select helpers in Rails
 
 ## Contributing
 
