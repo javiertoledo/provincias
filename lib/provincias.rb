@@ -1,92 +1,101 @@
 # -*- encoding: utf-8 -*-
 require "provincias/version"
+require 'csv'
 
 module Provincias
 
   def self.find(id)
-    @@provincias.each do |p|
-      return Provincia.new(p) if id == p[:id]
-    end
-    nil
+    @@provincias[id]
   end
 
   def self.find_by_name(name)
-    @@provincias.each do |p|
-      return Provincia.new(p) if name == p[:name]
-    end
-    nil
+    @@provincias.values.select { |p| p.name == name }.first
   end
 
   def self.all
-    @@provincias.map { |p| Provincia.new(p) }
+    @@provincias.values
   end
 
   def self.all_for_select
-    @@provincias.map { |p| [p[:name], p[:id]] }
+    @@provincias.values.sort { |a,b| a.name <=> b.name }.map { |p| [p.name, p.id] }
   end
 
   class Provincia
-
     attr_reader :id, :name
+    def initialize(row)
+      id, @name = row
+      @id = id.to_i
+    end
 
-    def initialize(hash)
-      @id = hash[:id]
-      @name = hash[:name]
+    def ciudades
+      Ciudades.find_by_provincia(@id)
+    end
+
+    def ciudades_for_select
+      ciudades.sort { |a,b| a.name <=> b.name }.map { |c| [c.name, c.id] }
+    end
+
+    def find_ciudad(id)
+      ciudades.select { |c| c.id == id }.first
+    end
+
+    def find_ciudad_by_name(name)
+      ciudades.select { |c| c.name == name }.first
     end
   end
 
-private
-  @@provincias = [
-    {:id => 1, :name => 'Álava'},
-    {:id => 2, :name => 'Albacete'},
-    {:id => 3, :name => 'Alicante'},
-    {:id => 4, :name => 'Almería'},
-    {:id => 5, :name => 'Avila'},
-    {:id => 6, :name => 'Badajoz'},
-    {:id => 7, :name => 'Illes Baleares'},
-    {:id => 8, :name => 'Barcelona'},
-    {:id => 9, :name => 'Burgos'},
-    {:id => 10, :name => 'Cáceres'},
-    {:id => 11, :name => 'Cádiz'},
-    {:id => 12, :name => 'Cástellón'},
-    {:id => 13, :name => 'Ciudad Real'},
-    {:id => 14, :name => 'Córdoba'},
-    {:id => 15, :name => 'Coruña, A'},
-    {:id => 16, :name => 'Cuenca'},
-    {:id => 17, :name => 'Girona'},
-    {:id => 18, :name => 'Granada'},
-    {:id => 19, :name => 'Guadalajara'},
-    {:id => 20, :name => 'Guipuzcoa'},
-    {:id => 21, :name => 'Huelva'},
-    {:id => 22, :name => 'Huesca'},
-    {:id => 23, :name => 'Jaén'},
-    {:id => 24, :name => 'León'},
-    {:id => 25, :name => 'Lleida'},
-    {:id => 26, :name => 'Rioja, La'},
-    {:id => 27, :name => 'Lugo'},
-    {:id => 28, :name => 'Madrid'},
-    {:id => 29, :name => 'Málaga'},
-    {:id => 30, :name => 'Murcia'},
-    {:id => 31, :name => 'Navarra'},
-    {:id => 32, :name => 'Ourense'},
-    {:id => 33, :name => 'Asturias'},
-    {:id => 34, :name => 'Palencia'},
-    {:id => 35, :name => 'Palmas, Las'},
-    {:id => 36, :name => 'Pontevedra'},
-    {:id => 37, :name => 'Salamanca'},
-    {:id => 38, :name => 'Santa Cruz de Tenerife'},
-    {:id => 39, :name => 'Cantabria'},
-    {:id => 40, :name => 'Segovia'},
-    {:id => 41, :name => 'Sevilla'},
-    {:id => 42, :name => 'Soria'},
-    {:id => 43, :name => 'Tarragona'},
-    {:id => 44, :name => 'Teruel'},
-    {:id => 45, :name => 'Toledo'},
-    {:id => 46, :name => 'Valencia'},
-    {:id => 47, :name => 'Valladolid'},
-    {:id => 48, :name => 'Vizcaya'},
-    {:id => 49, :name => 'Zamora'},
-    {:id => 50, :name => 'Zaragoza'},
-    {:id => 51, :name => 'Ceuta'},
-    {:id => 52, :name => 'Melilla'}]
+  def self.load_data
+    @@provincias = {}
+    CSV.foreach(File.expand_path('../../data/provinces.csv', __FILE__), :col_sep => ';', :encoding => 'utf-8') do |row|
+        @@provincias[row[0].to_i] = Provincia.new(row)
+    end
+    Ciudades.load_data(@@provincias)
+  end
+
+  module Ciudades
+
+    def self.find(id)
+      @@ciudades[id]
+    end
+
+    def self.find_by_name(name)
+      @@ciudades.values.select { |c| c.name == name }.first
+    end
+
+    def self.find_by_provincia(provincia_id)
+      @@ciudades.values.select { |c| c.provincia_id == provincia_id }
+    end
+
+    def self.all
+      @@ciudades.values
+    end
+
+    def self.all_for_select
+      @@ciudades.values.sort { |a,b| a.name <=> b.name }.map { |c| [c.name, c.id] }
+    end
+
+    class Ciudad
+      attr_reader :provincia_id, :id, :dc, :name
+      def initialize(row)
+        provincia_id, number, @dc, @name = row
+        @provincia_id = provincia_id.to_i
+        @id = (provincia_id+number).to_i
+      end
+
+      def provincia
+        Provincias.find(@provincia_id)
+      end
+    end
+
+    def self.load_data(provincias)
+      @@ciudades = {}
+      CSV.foreach(File.expand_path('../../data/cities.csv', __FILE__), :col_sep => ';', :encoding => 'utf-8') do |row|
+        ciudad = Ciudades::Ciudad.new(row)
+        @@ciudades[(row[0]+row[1]).to_i] = ciudad
+      end
+    end
+
+  end
+
 end
+Provincias.load_data
