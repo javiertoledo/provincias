@@ -1,11 +1,16 @@
 # -*- encoding: utf-8 -*-
 require "provincias/version"
 require 'csv'
+require 'i18n'
 
 module Provincias
 
   def self.find(id)
-    @@provincias[id]
+    @@provincias[id] || self.find_by_slug(id)
+  end
+
+  def self.find_by_slug(slug)
+    @@provincias.values.select { |p| p.slug == slug }.first
   end
 
   def self.find_by_name(name)
@@ -21,9 +26,10 @@ module Provincias
   end
 
   class Provincia
-    attr_reader :id, :name
+    attr_reader :id, :name, :slug
     def initialize(row)
       id, @name = row
+      @slug = I18n.transliterate(@name).downcase.scan(/\w+/).join('-')
       @id = id.to_i
     end
 
@@ -36,7 +42,11 @@ module Provincias
     end
 
     def find_ciudad(id)
-      ciudades.select { |c| c.id == id }.first
+      ciudades.select { |c| c.id == id }.first || self.find_ciudad_by_slug(id)
+    end
+
+    def find_ciudad_by_slug(slug)
+      ciudades.select { |c| c.slug == slug }.first
     end
 
     def find_ciudad_by_name(name)
@@ -55,7 +65,11 @@ module Provincias
   module Ciudades
 
     def self.find(id)
-      @@ciudades[id]
+      @@ciudades[id] || self.find_by_slug(id)
+    end
+
+    def self.find_by_slug(slug)
+      @@ciudades.values.select { |c| c.slug == slug }.first
     end
 
     def self.find_by_name(name)
@@ -75,9 +89,10 @@ module Provincias
     end
 
     class Ciudad
-      attr_reader :provincia_id, :id, :dc, :name
+      attr_reader :provincia_id, :id, :dc, :name, :slug
       def initialize(row)
         provincia_id, number, @dc, @name = row
+        @slug = I18n.transliterate(@name).downcase.scan(/\w+/).join('-')
         @provincia_id = provincia_id.to_i
         @id = (provincia_id+number).to_i
       end

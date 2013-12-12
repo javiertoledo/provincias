@@ -10,8 +10,12 @@ class TestApi < Test::Unit::TestCase
     assert_nil Provincias.find(100000)
     assert_equal Provincias.find(28).id, 28
     assert_equal Provincias.find(28).name, "Madrid"
+    assert_equal Provincias.find(28).slug, "madrid"
+    assert_equal Provincias.find('madrid').name, "Madrid"
+    assert_equal Provincias.find('palmas-las').name, "Palmas, Las"
     assert_equal Provincias.find_by_name('Palmas, Las').id, 35
     assert_equal Provincias.find_by_name('Palmas, Las').name, 'Palmas, Las'
+    assert_equal Provincias.find_by_name('Palmas, Las').slug, 'palmas-las'
     assert_nil Provincias.find_by_name('wombat')
     assert_instance_of Array, Provincias.all
     assert_instance_of Provincias::Provincia, Provincias.all.first
@@ -27,10 +31,15 @@ class TestApi < Test::Unit::TestCase
     assert_not_nil Provincias::Ciudades.find(35017)
     assert_equal Provincias::Ciudades.find(35017).id, 35017
     assert_equal Provincias::Ciudades.find(35017).name, 'Puerto del Rosario'
+    assert_equal Provincias::Ciudades.find(35017).slug, 'puerto-del-rosario'
+    assert_equal Provincias::Ciudades.find('puerto-del-rosario').id, 35017
+    assert_equal Provincias::Ciudades.find('puerto-del-rosario').name, 'Puerto del Rosario'
+    assert_equal Provincias::Ciudades.find('puerto-del-rosario').slug, 'puerto-del-rosario'
     assert_nil Provincias::Ciudades.find_by_name('wombat')
     assert_instance_of Provincias::Ciudades::Ciudad, Provincias::Ciudades.find_by_name('Palmas de Gran Canaria, Las')
     assert_equal Provincias::Ciudades.find_by_name('Palmas de Gran Canaria, Las').id, 35016
     assert_equal Provincias::Ciudades.find_by_name('Palmas de Gran Canaria, Las').name, 'Palmas de Gran Canaria, Las'
+    assert_equal Provincias::Ciudades.find_by_name('Palmas de Gran Canaria, Las').slug, 'palmas-de-gran-canaria-las'
     assert_instance_of Array, Provincias.find(28).ciudades
     assert_instance_of Provincias::Ciudades::Ciudad, Provincias.find(28).ciudades.first
     assert Provincias.find(28).ciudades.map { |c| c.name }.include?("Madrid")
@@ -38,7 +47,9 @@ class TestApi < Test::Unit::TestCase
     assert_nil Provincias.find(28).find_ciudad(999999999)
     assert_instance_of Provincias::Ciudades::Ciudad, Provincias.find(28).find_ciudad(28001)
     assert_equal "Acebeda, La", Provincias.find(28).find_ciudad(28001).name
+    assert_equal "Acebeda, La", Provincias.find(28).find_ciudad("acebeda-la").name
     assert_equal 28001, Provincias.find(28).find_ciudad(28001).id
+    assert_equal 28001, Provincias.find(28).find_ciudad("acebeda-la").id
     assert_instance_of Provincias::Ciudades::Ciudad, Provincias.find(28).find_ciudad_by_name("Alcobendas")
     assert_nil Provincias.find(28).find_ciudad_by_name("wombat")
     assert_equal "Alcobendas", Provincias.find(28).find_ciudad_by_name("Alcobendas").name
